@@ -1,5 +1,6 @@
 import { opine, serveStatic, urlencoded, Router } from "https://deno.land/x/opine/mod.ts";
 import { dirname, join } from "https://deno.land/x/opine/deps.ts";
+import "https://deno.land/x/dotenv/load.ts";
 
 
 import { api } from "./controller/router.ts"
@@ -8,7 +9,7 @@ import { api } from "./controller/router.ts"
 const __dirname = dirname(import.meta.url)
 
 const app = opine()
-const port = 5000
+const port = Deno.env.get("PORT")
 
 app.use("/media", serveStatic(join(__dirname, 'controller/media/')));
 
