@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GaanStar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+  </head>
+  <body>
+    <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom bg-dark">
+        <a href="/" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
+          <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"></use></svg>
+        </a>
+
+        <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+          <li><a href="#" class="nav-link px-2 link-secondary">Home</a></li>
+          <li><a href="#" class="nav-link px-2 link-light">FAQs</a></li>
+          <li><a href="#" class="nav-link px-2 link-light">About</a></li>
+        </ul>
+
+        <div class="col-md-3 text-end px-3">
+        </div>
+      </header>
+
+<div class="container py-3">
+  <header>
+    <div class="pb-3 mb-4 border-bottom">
+    </div>
+
+    <div class="pricing-header p-3 pb-md-4 mx-auto text-center">
+      <h1 class="display-4 fw-normal">Download your songs!</h1>
+      <p class="fs-5 text-muted">Paste your link and download your songs straight from YouTube</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="row row-cols-1 row-cols-md-3 mb-3 justify-content-center text-center">
+      <div class="col-md-6">
+        <div class="card mb-4 rounded-3 shadow-sm border-primary">
+          <div class="card-header py-3 text-white bg-primary border-primary">
+            <h4 class="my-0 fw-normal">GaanStar</h4>
+          </div>
+          <div class="card-body center ">
+            <div class="col-md d-flex justify-content-center">
+              <div class="card">
+                <div class="card-body">
+                  <embed id="ytEmbed" src="" width="200" height="300">
+                </div>
+              </div>
+            </div>
+
+            <div class="input-group mb-3">
+              <input type="text" class="form-control" placeholder="https://www.youtube.com/watch?v=5f1O74GwWJM" aria-label="Recipient's username" id="ytLink">
+              <span class="input-group-text" id="basic-addon2">YouTube Link</span>
+            </div>
+
+            <button type="button" class="w-100 btn btn-lg btn-primary" onclick="queueDownload()">Download Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">
+      const source = document.getElementById('ytLink');
+      const result = document.getElementById('ytEmbed');
+      var downloadable = false
+
+      oldSongs()
+
+      function matchYoutubeUrl(url) {
+        var p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
+        if(url.match(p)){
+            return url.match(p)[1];
+        }
+        return false;
+      }
+      const inputHandler = function(e) {
+        let vidId = matchYoutubeUrl(e.target.value)
+        console.log(vidId);
+        if (vidId == false){
+          console.log("false called");
+          return ;
+        } else {
+          result.src = (`https://www.youtube.com/embed/${vidId}`)
+          downloadable = true
+        }
+      }
+      source.addEventListener('input', inputHandler);
+
+      function addRows(data) {
+        var table = document.getElementById( 'myTable' ),
+        row = table.insertRow(-1),
+        cell1 = row.insertCell(0),
+        cell2 = row.insertCell(1);
+
+        cell1.innerHTML = data.title;
+        cell2.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>';
+        return cell2
+      }
+
+      function oldSongs() {
+        let rawSongList = localStorage.getItem('songs');
+        console.log(rawSongList);
+        if (rawSongList){
+          let songList = JSON.parse(rawSongList)
+          for (song in songList){
+            var table = document.getElementById( 'myTable' ),
+            row = table.insertRow(-1),
+            cell1 = row.insertCell(0),
+            cell2 = row.insertCell(1);
+            cell1.innerHTML = song.title;
+            cell2.innerHTML = song.link;
+          }
+        }
+      }
+
+      async function queueDownload() {
+        if (downloadable){
+          let check, vidId = matchYoutubeUrl(document.getElementById('ytLink').value);
+          let data1 = await fetch(`/api/title/${vidId}`)
+          let name = await data1.json()
+          console.log(name.title);
+          let cell = addRows(name)
+          console.log(vidId);
+          let data = await fetch(`/api/enqueue/${vidId}`,{ method: "POST"})
+          let total = await data.json()
+          console.log(total);
+          cell.innerHTML = '<a href="' + total.mp3 +'" download="'+ name.title +'">Download</a>'
+
+          let songList = JSON.parse(localStorage.getItem('songs'));
+          let currrentSongs = {title: name.title, link: total.mp3}
+          if (!songList){
+            console.log('hit');
+            localStorage.setItem('songs',JSON.stringify(currrentSongs));
+          } else {
+
+            let jsons = new Array();
+            jsons.push(songList);
+            jsons.push(currrentSongs);
+            localStorage.setItem('songs',JSON.stringify(jsons))
+          }
+        } else {
+          return
+        }
+      }
+
+
+    </script>
+
+    <h2 class="display-6 text-center mb-4">Downloads</h2>
+
+    <div class="table-responsive">
+      <table class="table text-center" id="myTable">
+        <thead>
+          <tr>
+            <th scope="row" class="width: 22%">Video Name</th>
+            <th style="width: 22%;">Download link</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.5/dist/umd/popper.min.js" integrity="sha384-Xe+8cL9oJa6tN/veChSP7q+mnSPaj5Bcu9mPX5F5xIGE0DVittaqT5lorf0EI7Vk" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.min.js" integrity="sha384-kjU+l4N0Yf4ZOJErLsIcvOU2qSb74wXpOhqTvwVx3OElZRweTnQ6d31fXEoRD1Jy" crossorigin="anonymous"></script>
+</body>
+
+
+</html>
