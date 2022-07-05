@@ -13,6 +13,8 @@ export const api = new Router
 
 const queue = []
 
+setInterval(()=>{ clearDir() }, 21600000)
+
 api.post("/enqueue/:id", async (req,res) => {
   let r  =await downloader(req.params.id);
   res.send(r)
@@ -43,5 +45,6 @@ api.get("/title/:id", async (req,res) => {
 
 
 function clearDir() {
-  
+  console.log("Directory cleared");
+  emptyDir('controller/media/')
 }
