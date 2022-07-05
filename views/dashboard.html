@@ -126,19 +126,6 @@
           let total = await data.json()
           console.log(total);
           cell.innerHTML = '<a href="' + total.mp3 +'" download="'+ name.title +'">Download</a>'
-
-          let songList = JSON.parse(localStorage.getItem('songs'));
-          let currrentSongs = {title: name.title, link: total.mp3}
-          if (!songList){
-            console.log('hit');
-            localStorage.setItem('songs',JSON.stringify(currrentSongs));
-          } else {
-
-            let jsons = new Array();
-            jsons.push(songList);
-            jsons.push(currrentSongs);
-            localStorage.setItem('songs',JSON.stringify(jsons))
-          }
         } else {
           return
         }
